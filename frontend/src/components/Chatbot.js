@@ -126,7 +126,7 @@ function Chatbot({ tasks, onAddTask, userId }) {
 
     try {
       // Call OpenAI API via backend
-      const response = await axios.post(CHAT_API_URL + '/chat', {
+      const response = await axios.post(CHAT_API_URL, {
         message: userMessage,
         tasks: tasks
       });
