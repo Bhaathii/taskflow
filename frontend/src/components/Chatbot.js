@@ -3,7 +3,7 @@ import { MessageCircle, Send, X, Loader } from 'lucide-react';
 import axios from 'axios';
 import '../styles/Chatbot.css';
 
-const CHAT_API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/chat';
+const CHAT_API_URL = process.env.REACT_APP_CHAT_API_URL || 'http://localhost:5000/api/chat';
 
 function Chatbot({ tasks, onAddTask, userId }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +16,6 @@ function Chatbot({ tasks, onAddTask, userId }) {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [useAI, setUseAI] = useState(true); // Toggle between AI and simple mode
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to latest message
@@ -126,26 +125,13 @@ function Chatbot({ tasks, onAddTask, userId }) {
     setLoading(true);
 
     try {
-      let result;
+      // Call OpenAI API via backend
+      const response = await axios.post(CHAT_API_URL + '/chat', {
+        message: userMessage,
+        tasks: tasks
+      });
 
-      if (useAI) {
-        // Use OpenAI API
-        try {
-          const response = await axios.post(CHAT_API_URL + '/chat', {
-            message: userMessage,
-            tasks: tasks
-          });
-
-          result = response.data;
-        } catch (aiError) {
-          console.log('AI error, falling back to simple mode:', aiError.message);
-          // Fallback to simple mode if AI fails
-          result = await processChatInput(userMessage);
-        }
-      } else {
-        // Use simple pattern matching
-        result = await processChatInput(userMessage);
-      }
+      const result = response.data;
       
       // Add bot response
       setMessages(prev => [...prev, {
@@ -174,9 +160,13 @@ function Chatbot({ tasks, onAddTask, userId }) {
       }
     } catch (error) {
       console.error('Error processing message:', error);
+      const errorMessage = error.response?.data?.details || 
+                          error.response?.data?.error || 
+                          'Sorry, I encountered an error. Please try again.';
+      
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
-        text: '❌ Sorry, I encountered an error. Please try again.',
+        text: `❌ ${errorMessage}`,
         sender: 'bot'
       }]);
     } finally {

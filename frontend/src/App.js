@@ -9,7 +9,7 @@ import TaskList from './components/TaskList';
 import Chatbot from './components/Chatbot';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/tasks';
-const GOOGLE_CLIENT_ID = '66337315806-4r7st99rh8grdh8rinoafmqv2ni8si3g.apps.googleusercontent.com'; // Replace with your actual Google Client ID
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 function App() {
   const [user, setUser] = useState(null);
@@ -17,6 +17,8 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'pending', 'completed'
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Check if user is already logged in
   useEffect(() => {
@@ -163,6 +165,20 @@ function App() {
 
   const completedCount = tasks.filter(t => t.completed).length;
 
+  // Filter and search tasks
+  const filteredTasks = tasks.filter(task => {
+    const matchesStatus = 
+      filterStatus === 'all' || 
+      (filterStatus === 'completed' && task.completed) ||
+      (filterStatus === 'pending' && !task.completed);
+    
+    const matchesSearch = 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesStatus && matchesSearch;
+  });
+
   // Show login screen if not authenticated
   if (!user) {
     return (
@@ -205,6 +221,73 @@ function App() {
             <div className="loading">Loading your tasks...</div>
           ) : (
             <>
+              {/* Search Bar */}
+              <div style={{ marginBottom: '20px' }}>
+                <input
+                  type="text"
+                  placeholder="🔍 Search tasks by title or description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    border: '2px solid #e0e0e0',
+                    fontSize: '1rem',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Filter Buttons */}
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setFilterStatus('all')}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '20px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    background: filterStatus === 'all' ? '#667eea' : '#e0e0e0',
+                    color: filterStatus === 'all' ? 'white' : '#333',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  📋 All ({tasks.length})
+                </button>
+                <button
+                  onClick={() => setFilterStatus('pending')}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '20px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    background: filterStatus === 'pending' ? '#667eea' : '#e0e0e0',
+                    color: filterStatus === 'pending' ? 'white' : '#333',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  ⏳ Pending ({tasks.filter(t => !t.completed).length})
+                </button>
+                <button
+                  onClick={() => setFilterStatus('completed')}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '20px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    background: filterStatus === 'completed' ? '#667eea' : '#e0e0e0',
+                    color: filterStatus === 'completed' ? 'white' : '#333',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  ✅ Completed ({completedCount})
+                </button>
+              </div>
+
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -218,7 +301,7 @@ function App() {
                 </div>
               </div>
               <TaskList 
-                tasks={tasks}
+                tasks={filteredTasks}
                 onToggleComplete={toggleComplete}
                 onDeleteTask={deleteTask}
                 onUpdateTask={updateTask}

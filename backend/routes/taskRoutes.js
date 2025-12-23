@@ -2,6 +2,36 @@ const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 
+// Validation middleware
+const validateTask = (req, res, next) => {
+  const { title, description, priority } = req.body;
+
+  // Check title
+  if (!title || typeof title !== 'string' || title.trim().length === 0) {
+    return res.status(400).json({ message: 'Task title is required and must be a non-empty string' });
+  }
+
+  if (title.trim().length > 100) {
+    return res.status(400).json({ message: 'Task title must not exceed 100 characters' });
+  }
+
+  // Check description
+  if (description && typeof description !== 'string') {
+    return res.status(400).json({ message: 'Task description must be a string' });
+  }
+
+  if (description && description.length > 500) {
+    return res.status(400).json({ message: 'Task description must not exceed 500 characters' });
+  }
+
+  // Check priority
+  if (priority && !['low', 'medium', 'high'].includes(priority)) {
+    return res.status(400).json({ message: 'Priority must be "low", "medium", or "high"' });
+  }
+
+  next();
+};
+
 // Middleware to check if userId is provided
 const checkUserId = (req, res, next) => {
   const userId = req.headers['x-user-id'] || req.body.userId;
@@ -43,14 +73,15 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new task for the logged-in user
-router.post('/', async (req, res) => {
+router.post('/', checkUserId, validateTask, async (req, res) => {
   const task = new Task({
     userId: req.userId,
     title: req.body.title,
     description: req.body.description || '',
     completed: req.body.completed || false,
     dueDate: req.body.dueDate || null,
-    reminder: req.body.reminder || false
+    reminder: req.body.reminder || false,
+    priority: req.body.priority || 'medium'
   });
 
   try {
@@ -62,7 +93,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update a task (must belong to user)
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkUserId, validateTask, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
@@ -77,6 +108,7 @@ router.put('/:id', async (req, res) => {
     if (req.body.completed !== undefined) task.completed = req.body.completed;
     if (req.body.dueDate !== undefined) task.dueDate = req.body.dueDate;
     if (req.body.reminder !== undefined) task.reminder = req.body.reminder;
+    if (req.body.priority !== undefined) task.priority = req.body.priority;
     
     const updatedTask = await task.save();
     res.json(updatedTask);

@@ -22,23 +22,19 @@ app.get('/', (req, res) => {
 
 // MongoDB Connection
 const connectDB = async () => {
-  let uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/taskflow';
+  let uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    console.error('MONGODB_URI is not set in .env file');
+    process.exit(1);
+  }
 
   try {
     await mongoose.connect(uri);
-    console.log('MongoDB Connected Successfully');
+    console.log('✅ MongoDB Connected Successfully');
   } catch (err) {
-    console.log('Local MongoDB failed, trying in-memory fallback...');
-    try {
-      const { MongoMemoryServer } = require('mongodb-memory-server');
-      const mongod = await MongoMemoryServer.create();
-      const memoryUri = mongod.getUri();
-      await mongoose.connect(memoryUri);
-      console.log('MongoDB Connected Successfully (In-Memory)');
-    } catch (fallbackErr) {
-      console.log('MongoDB Connection Error:', err);
-      console.log('Fallback Error:', fallbackErr);
-    }
+    console.error('❌ MongoDB Connection Error:', err.message);
+    process.exit(1);
   }
 };
 

@@ -5,6 +5,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Helper to format date for input (local time)
   const toLocalISOString = (dateStr) => {
@@ -16,21 +17,30 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
 
   const [editDueDate, setEditDueDate] = useState(toLocalISOString(task.dueDate));
   const [editReminder, setEditReminder] = useState(task.reminder);
+  const [editPriority, setEditPriority] = useState(task.priority || 'medium');
   const [error, setError] = useState('');
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editTitle.trim()) {
       setError('Task title cannot be empty');
       return;
     }
-    onUpdateTask(task._id, {
-      title: editTitle.trim(),
-      description: editDescription.trim(),
-      dueDate: editDueDate || null,
-      reminder: editReminder
-    });
-    setIsEditing(false);
-    setError('');
+    setIsLoading(true);
+    try {
+      await onUpdateTask(task._id, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        dueDate: editDueDate || null,
+        reminder: editReminder,
+        priority: editPriority
+      });
+      setIsEditing(false);
+      setError('');
+    } catch (err) {
+      console.error('Error updating task:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -38,6 +48,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
     setEditDescription(task.description);
     setEditDueDate(toLocalISOString(task.dueDate));
     setEditReminder(task.reminder);
+    setEditPriority(task.priority || 'medium');
     setIsEditing(false);
     setError('');
   };
@@ -117,7 +128,17 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
               className="input-field"
               style={{ marginTop: 0, flex: 1 }}
             />
-            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <select
+              value={editPriority}
+              onChange={(e) => setEditPriority(e.target.value)}
+              className="input-field"
+              style={{ marginTop: 0, width: '120px' }}
+            >
+              <option value="low">🟢 Low</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="high">🔴 High</option>
+            </select>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               <input
                 type="checkbox"
                 checked={editReminder}
@@ -128,10 +149,10 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         </div>
 
         <div className="edit-actions">
-          <button onClick={handleUpdate} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <Check size={18} /> Save
+          <button onClick={handleUpdate} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: isLoading ? 0.7 : 1 }} disabled={isLoading}>
+            <Check size={18} /> {isLoading ? 'Saving...' : 'Save'}
           </button>
-          <button onClick={handleCancel} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button onClick={handleCancel} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} disabled={isLoading}>
             <X size={18} /> Cancel
           </button>
         </div>
@@ -154,7 +175,13 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         {task.description && (
           <div className="task-description">{task.description}</div>
         )}
-        <div className="task-meta" style={{ display: 'flex', gap: '15px', fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
+        <div className="task-meta" style={{ display: 'flex', gap: '15px', fontSize: '0.8rem', color: '#666', marginTop: '5px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '12px', background: task.priority === 'high' ? '#ffebee' : task.priority === 'low' ? '#e8f5e9' : '#fff3e0' }}>
+            {task.priority === 'high' && '🔴'}
+            {task.priority === 'medium' && '🟡'}
+            {task.priority === 'low' && '🟢'}
+            {task.priority || 'medium'} Priority
+          </div>
           <div className="task-date" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Calendar size={14} />
             Created: {formatDate(task.createdAt)}

@@ -7,14 +7,17 @@ function TaskForm({ onAddTask }) {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [reminder, setReminder] = useState(false);
+  const [priority, setPriority] = useState('medium');
   const [showSmartInput, setShowSmartInput] = useState(false);
   const [smartInputValue, setSmartInputValue] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const titleId = React.useId();
   const descriptionId = React.useId();
   const dueDateId = React.useId();
   const reminderId = React.useId();
+  const priorityId = React.useId();
   const smartInputId = React.useId();
 
   const handleSmartInputChange = (e) => {
@@ -50,7 +53,7 @@ function TaskForm({ onAddTask }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!title.trim()) {
@@ -58,21 +61,38 @@ function TaskForm({ onAddTask }) {
       return;
     }
 
-    onAddTask({
-      title: title.trim(),
-      description: description.trim(),
-      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-      reminder: reminder
-    });
+    if (title.trim().length > 100) {
+      setError('Task title must not exceed 100 characters');
+      return;
+    }
 
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setReminder(false);
-    setSmartInputValue('');
-    setError('');
-    // Keep Smart Input open if it was open? Or close it?
-    // Let's leave it as is.
+    if (description.length > 500) {
+      setError('Task description must not exceed 500 characters');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await onAddTask({
+        title: title.trim(),
+        description: description.trim(),
+        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+        reminder: reminder,
+        priority: priority
+      });
+
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+      setReminder(false);
+      setPriority('medium');
+      setSmartInputValue('');
+      setError('');
+    } catch (err) {
+      console.error('Error adding task:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -180,6 +200,21 @@ function TaskForm({ onAddTask }) {
             />
           </div>
 
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label htmlFor={priorityId} style={{ fontSize: '0.9rem', marginBottom: '5px', color: '#666' }}>Priority</label>
+            <select
+              id={priorityId}
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="input-field"
+              style={{ marginTop: 0 }}
+            >
+              <option value="low">🟢 Low</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="high">🔴 High</option>
+            </select>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '22px' }}>
             <input
               id={reminderId}
@@ -200,9 +235,9 @@ function TaskForm({ onAddTask }) {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '15px' }}>
+        <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '15px', opacity: isLoading ? 0.7 : 1 }} disabled={isLoading}>
           <Plus size={20} />
-          Add Task
+          {isLoading ? 'Adding...' : 'Add Task'}
         </button>
       </form>
     </div>
