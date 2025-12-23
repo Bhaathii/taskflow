@@ -1,16 +1,54 @@
 import React, { useState } from 'react';
-import { Plus, Bell } from 'lucide-react';
+import { Plus, Bell, Sparkles } from 'lucide-react';
+import * as chrono from 'chrono-node';
 
 function TaskForm({ onAddTask }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [reminder, setReminder] = useState(false);
+  const [showSmartInput, setShowSmartInput] = useState(false);
+  const [smartInputValue, setSmartInputValue] = useState('');
   const [error, setError] = useState('');
+
   const titleId = React.useId();
   const descriptionId = React.useId();
   const dueDateId = React.useId();
   const reminderId = React.useId();
+  const smartInputId = React.useId();
+
+  const handleSmartInputChange = (e) => {
+    const text = e.target.value;
+    setSmartInputValue(text);
+
+    const parsed = chrono.parse(text);
+    if (parsed.length > 0) {
+      const date = parsed[0].start.date();
+
+      // Convert to local YYYY-MM-DDTHH:mm string for the input
+      // This is a bit tricky. new Date(date) gives a date object.
+      // We want the local time string representation.
+      const offset = date.getTimezoneOffset() * 60000;
+      const localDate = new Date(date.getTime() - offset);
+      const isoString = localDate.toISOString().slice(0, 16);
+
+      setDueDate(isoString);
+
+      // Remove the date text from the title?
+      // Optional: keep the full text as title or strip the date part.
+      // For now, let's keep the full text in the smart input, but update the 'title' state
+      // with the text MINUS the date string if we wanted to be fancy.
+      // But user might want to edit.
+
+      // Let's just update the title to match the input text for now,
+      // or maybe the user wants the Smart Input to just populate the fields.
+
+      // Current design: Smart Input populates Title and Date.
+      setTitle(text);
+    } else {
+      setTitle(text);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -31,12 +69,38 @@ function TaskForm({ onAddTask }) {
     setDescription('');
     setDueDate('');
     setReminder(false);
+    setSmartInputValue('');
     setError('');
+    // Keep Smart Input open if it was open? Or close it?
+    // Let's leave it as is.
   };
 
   return (
     <div className="task-form">
-      <h2>✨ Create New Task</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <h2 style={{ margin: 0 }}>✨ Create New Task</h2>
+        <button
+          type="button"
+          onClick={() => setShowSmartInput(!showSmartInput)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#667eea',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontSize: '0.9rem',
+            padding: '5px 10px',
+            borderRadius: '5px',
+            backgroundColor: showSmartInput ? '#eef2ff' : 'transparent'
+          }}
+        >
+          <Sparkles size={16} />
+          {showSmartInput ? 'Simple Mode' : 'Smart Add'}
+        </button>
+      </div>
+
       {error && (
         <div style={{
           color: '#d32f2f',
@@ -49,7 +113,29 @@ function TaskForm({ onAddTask }) {
           {error}
         </div>
       )}
+
       <form onSubmit={handleSubmit}>
+        {showSmartInput && (
+          <div style={{ marginBottom: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+            <label htmlFor={smartInputId} style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', color: '#475569', fontWeight: 'bold' }}>
+              <Sparkles size={14} style={{ display: 'inline', marginRight: '4px' }}/>
+              Smart Input
+            </label>
+            <input
+              id={smartInputId}
+              type="text"
+              placeholder="e.g., 'Call Mom tomorrow at 5pm'"
+              value={smartInputValue}
+              onChange={handleSmartInputChange}
+              className="input-field"
+              autoFocus
+            />
+            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '5px' }}>
+              Type naturally. We'll extract the due date automatically.
+            </div>
+          </div>
+        )}
+
         <label htmlFor={titleId} className="visually-hidden">Task Title *</label>
         <input
           id={titleId}
@@ -58,6 +144,7 @@ function TaskForm({ onAddTask }) {
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
+            if (showSmartInput) setSmartInputValue(e.target.value); // Sync back
             setError('');
           }}
           className="input-field"
