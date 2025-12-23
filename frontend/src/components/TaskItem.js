@@ -93,6 +93,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         checked={task.completed}
         onChange={() => onToggleComplete(task._id, task.completed)}
         title={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        aria-label={task.completed ? 'Mark task as incomplete' : 'Mark task as complete'}
       />
       <div className="task-content">
         <div className="task-title">{task.title}</div>
