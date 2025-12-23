@@ -48,7 +48,9 @@ router.post('/', async (req, res) => {
     userId: req.userId,
     title: req.body.title,
     description: req.body.description || '',
-    completed: req.body.completed || false
+    completed: req.body.completed || false,
+    dueDate: req.body.dueDate || null,
+    reminder: req.body.reminder || false
   });
 
   try {
@@ -73,6 +75,8 @@ router.put('/:id', async (req, res) => {
     if (req.body.title) task.title = req.body.title;
     if (req.body.description !== undefined) task.description = req.body.description;
     if (req.body.completed !== undefined) task.completed = req.body.completed;
+    if (req.body.dueDate !== undefined) task.dueDate = req.body.dueDate;
+    if (req.body.reminder !== undefined) task.reminder = req.body.reminder;
     
     const updatedTask = await task.save();
     res.json(updatedTask);

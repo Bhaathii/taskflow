@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, Check, X, Calendar } from 'lucide-react';
+import { Edit2, Trash2, Check, X, Calendar, Clock, Bell } from 'lucide-react';
 
 function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description);
+
+  // Helper to format date for input (local time)
+  const toLocalISOString = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  };
+
+  const [editDueDate, setEditDueDate] = useState(toLocalISOString(task.dueDate));
+  const [editReminder, setEditReminder] = useState(task.reminder);
   const [error, setError] = useState('');
 
   const handleUpdate = () => {
@@ -14,7 +25,9 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
     }
     onUpdateTask(task._id, {
       title: editTitle.trim(),
-      description: editDescription.trim()
+      description: editDescription.trim(),
+      dueDate: editDueDate || null,
+      reminder: editReminder
     });
     setIsEditing(false);
     setError('');
@@ -23,13 +36,35 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
   const handleCancel = () => {
     setEditTitle(task.title);
     setEditDescription(task.description);
+    setEditDueDate(toLocalISOString(task.dueDate));
+    setEditReminder(task.reminder);
     setIsEditing(false);
     setError('');
+  };
+
+  const handleReminderChange = (e) => {
+    const checked = e.target.checked;
+    setEditReminder(checked);
+    if (checked && 'Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
   };
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (isEditing) {
@@ -73,6 +108,25 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         <div style={{ fontSize: '0.85rem', color: '#999' }}>
           {editDescription.length}/500
         </div>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px', marginBottom: '10px' }}>
+            <input
+              type="datetime-local"
+              value={editDueDate}
+              onChange={(e) => setEditDueDate(e.target.value)}
+              className="input-field"
+              style={{ marginTop: 0, flex: 1 }}
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={editReminder}
+                onChange={handleReminderChange}
+              />
+              <Bell size={16} /> Remind
+            </label>
+        </div>
+
         <div className="edit-actions">
           <button onClick={handleUpdate} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <Check size={18} /> Save
@@ -100,9 +154,23 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         {task.description && (
           <div className="task-description">{task.description}</div>
         )}
-        <div className="task-date">
-          <Calendar size={14} />
-          {formatDate(task.createdAt)}
+        <div className="task-meta" style={{ display: 'flex', gap: '15px', fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
+          <div className="task-date" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Calendar size={14} />
+            Created: {formatDate(task.createdAt)}
+          </div>
+          {task.dueDate && (
+            <div className="task-due-date" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: new Date(task.dueDate) < new Date() && !task.completed ? '#d32f2f' : '#666' }}>
+              <Clock size={14} />
+              Due: {formatDateTime(task.dueDate)}
+            </div>
+          )}
+          {task.reminder && !task.completed && (
+            <div className="task-reminder" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f57c00' }}>
+              <Bell size={14} />
+              Reminder Set
+            </div>
+          )}
         </div>
       </div>
       <div className="task-actions">

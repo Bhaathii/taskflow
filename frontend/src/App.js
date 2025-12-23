@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import './App.css';
@@ -35,7 +35,47 @@ function App() {
     } else {
       setLoading(false);
     }
+
   }, []);
+
+  // Track notified tasks to avoid duplicates
+  const notifiedTasksRef = useRef(new Set());
+
+  // Check for due tasks
+  useEffect(() => {
+    const checkReminders = () => {
+      if (!tasks.length) return;
+
+      const now = new Date();
+      tasks.forEach(task => {
+        if (task.completed || !task.reminder || !task.dueDate) return;
+
+        const dueDate = new Date(task.dueDate);
+        const timeDiff = dueDate.getTime() - now.getTime();
+
+        // Notify if due within the next minute, or if it was due recently (within last 5 mins) and not yet notified
+        // This covers the case where the user opens the app slightly after the due time
+        if (timeDiff > -5 * 60 * 1000 && timeDiff <= 60000) {
+            if (!notifiedTasksRef.current.has(task._id)) {
+                if (Notification.permission === 'granted') {
+                    new Notification('Task Reminder', {
+                        body: `Task "${task.title}" is due soon!`,
+                        icon: '/logo192.png'
+                    });
+                    notifiedTasksRef.current.add(task._id);
+                }
+            }
+        }
+      });
+    };
+
+    // Check immediately on load/update
+    checkReminders();
+
+    const interval = setInterval(checkReminders, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [tasks]);
 
   const fetchTasks = async (uid) => {
     try {
