@@ -6,6 +6,7 @@ import Login from './components/Login';
 import UserProfile from './components/UserProfile';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
+import Chatbot from './components/Chatbot';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/tasks';
 const GOOGLE_CLIENT_ID = '66337315806-4r7st99rh8grdh8rinoafmqv2ni8si3g.apps.googleusercontent.com'; // Replace with your actual Google Client ID
@@ -225,6 +226,13 @@ function App() {
             </>
           )}
         </div>
+
+        {/* Chatbot Assistant */}
+        <Chatbot 
+          tasks={tasks}
+          onAddTask={addTask}
+          userId={userId}
+        />
       </div>
     </GoogleOAuthProvider>
   );

@@ -11,7 +11,9 @@ app.use(express.json());
 
 // Routes
 const taskRoutes = require('./routes/taskRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 app.use('/api/tasks', taskRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Base route
 app.get('/', (req, res) => {
