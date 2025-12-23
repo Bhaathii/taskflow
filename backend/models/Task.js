@@ -18,6 +18,14 @@ const TaskSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  dueDate: {
+    type: Date,
+    default: null
+  },
+  reminder: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

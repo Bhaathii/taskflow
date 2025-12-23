@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Bell } from 'lucide-react';
 
 function TaskForm({ onAddTask }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [reminder, setReminder] = useState(false);
   const [error, setError] = useState('');
   const titleId = React.useId();
   const descriptionId = React.useId();
+  const dueDateId = React.useId();
+  const reminderId = React.useId();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,11 +22,15 @@ function TaskForm({ onAddTask }) {
 
     onAddTask({
       title: title.trim(),
-      description: description.trim()
+      description: description.trim(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      reminder: reminder
     });
 
     setTitle('');
     setDescription('');
+    setDueDate('');
+    setReminder(false);
     setError('');
   };
 
@@ -71,7 +79,41 @@ function TaskForm({ onAddTask }) {
         <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '-10px' }}>
           {description.length}/500
         </div>
-        <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <label htmlFor={dueDateId} style={{ fontSize: '0.9rem', marginBottom: '5px', color: '#666' }}>Due Date</label>
+            <input
+              id={dueDateId}
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="input-field"
+              style={{ marginTop: 0 }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '22px' }}>
+            <input
+              id={reminderId}
+              type="checkbox"
+              checked={reminder}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setReminder(checked);
+                if (checked && 'Notification' in window && Notification.permission !== 'granted') {
+                  Notification.requestPermission();
+                }
+              }}
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+            <label htmlFor={reminderId} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Bell size={16} /> Remind me
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '15px' }}>
           <Plus size={20} />
           Add Task
         </button>
