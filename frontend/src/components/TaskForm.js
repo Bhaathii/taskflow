@@ -5,6 +5,8 @@ function TaskForm({ onAddTask }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const titleId = React.useId();
+  const descriptionId = React.useId();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,7 +42,9 @@ function TaskForm({ onAddTask }) {
         </div>
       )}
       <form onSubmit={handleSubmit}>
+        <label htmlFor={titleId} className="visually-hidden">Task Title *</label>
         <input
+          id={titleId}
           type="text"
           placeholder="What needs to be done? *"
           value={title}
@@ -51,10 +55,12 @@ function TaskForm({ onAddTask }) {
           className="input-field"
           maxLength="100"
         />
-        <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '-10px' }}>
+        <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '-10px' }} aria-hidden="true">
           {title.length}/100
         </div>
+        <label htmlFor={descriptionId} className="visually-hidden">Task Description</label>
         <textarea
+          id={descriptionId}
           placeholder="Add more details (optional)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
