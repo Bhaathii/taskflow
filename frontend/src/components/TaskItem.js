@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { Edit2, Trash2, Check, X, Calendar, Clock, Bell } from 'lucide-react';
 
 function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
@@ -6,6 +6,11 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description);
   const [isLoading, setIsLoading] = useState(false);
+
+  const editTitleId = useId();
+  const editDescriptionId = useId();
+  const editDueDateId = useId();
+  const editPriorityId = useId();
 
   // Helper to format date for input (local time)
   const toLocalISOString = (dateStr) => {
@@ -94,7 +99,9 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
             {error}
           </div>
         )}
+        <label htmlFor={editTitleId} className="visually-hidden">Task Title</label>
         <input
+          id={editTitleId}
           type="text"
           value={editTitle}
           onChange={(e) => {
@@ -108,7 +115,9 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         <div style={{ fontSize: '0.85rem', color: '#999' }}>
           {editTitle.length}/100
         </div>
+        <label htmlFor={editDescriptionId} className="visually-hidden">Task Description</label>
         <textarea
+          id={editDescriptionId}
           value={editDescription}
           onChange={(e) => setEditDescription(e.target.value)}
           className="input-field"
@@ -121,14 +130,18 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px', marginBottom: '10px' }}>
+            <label htmlFor={editDueDateId} className="visually-hidden">Due Date</label>
             <input
+              id={editDueDateId}
               type="datetime-local"
               value={editDueDate}
               onChange={(e) => setEditDueDate(e.target.value)}
               className="input-field"
               style={{ marginTop: 0, flex: 1 }}
             />
+            <label htmlFor={editPriorityId} className="visually-hidden">Priority</label>
             <select
+              id={editPriorityId}
               value={editPriority}
               onChange={(e) => setEditPriority(e.target.value)}
               className="input-field"
