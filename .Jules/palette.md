@@ -1,3 +1,5 @@
-## 2024-10-24 - Accessibility Patterns
-**Learning:** React applications often lack utility classes for screen-reader-only content, leading to developers skipping labels or using placeholder text as labels.
-**Action:** Always check for and add a `.visually-hidden` or `.sr-only` utility class early to encourage accessible labeling without compromising visual design.
+# Palette's Journal
+
+## 2025-02-20 - Initial Setup
+**Learning:** The repo uses standard CSS and React. A11y is partially present (visually-hidden class exists) but inconsistent (missing ARIA labels on inputs/buttons).
+**Action:** Always check for `aria-label` or `htmlFor` on inputs. Add `role="group"` for button groups acting as radio/tabs.
