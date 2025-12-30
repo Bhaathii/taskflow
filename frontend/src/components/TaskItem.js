@@ -104,6 +104,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
           className="input-field"
           placeholder="Task title"
           maxLength="100"
+          aria-label="Edit task title"
         />
         <div style={{ fontSize: '0.85rem', color: '#999' }}>
           {editTitle.length}/100
@@ -115,6 +116,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
           rows="3"
           placeholder="Task description"
           maxLength="500"
+          aria-label="Edit task description"
         />
         <div style={{ fontSize: '0.85rem', color: '#999' }}>
           {editDescription.length}/500
@@ -127,12 +129,14 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
               onChange={(e) => setEditDueDate(e.target.value)}
               className="input-field"
               style={{ marginTop: 0, flex: 1 }}
+              aria-label="Edit due date"
             />
             <select
               value={editPriority}
               onChange={(e) => setEditPriority(e.target.value)}
               className="input-field"
               style={{ marginTop: 0, width: '120px' }}
+              aria-label="Edit priority"
             >
               <option value="low">🟢 Low</option>
               <option value="medium">🟡 Medium</option>
