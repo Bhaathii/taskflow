@@ -222,8 +222,10 @@ function App() {
           ) : (
             <>
               {/* Search Bar */}
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '20px', position: 'relative' }}>
+                <label htmlFor="search-tasks" className="visually-hidden">Search tasks</label>
                 <input
+                  id="search-tasks"
                   type="text"
                   placeholder="🔍 Search tasks by title or description..."
                   value={searchQuery}
@@ -231,12 +233,38 @@ function App() {
                   style={{
                     width: '100%',
                     padding: '12px',
+                    paddingRight: searchQuery ? '40px' : '12px',
                     borderRadius: '10px',
                     border: '2px solid #e0e0e0',
                     fontSize: '1rem',
                     fontFamily: 'inherit'
                   }}
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#999',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                )}
               </div>
 
               {/* Filter Buttons */}
