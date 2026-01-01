@@ -10,12 +10,14 @@ function Chatbot({ tasks, onAddTask, userId }) {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: 'Hi! 👋 I\'m TaskFlow Assistant powered by GPT-4. I can help you create tasks, answer questions, and provide productivity tips. Try saying "Help me organize my day" or "Add a task to buy groceries"',
+      text: 'Hi! 👋 I\'m TaskFlow Assistant. I can help you create tasks, answer questions, and provide productivity tips. Try saying "Add a task" or "Show my tasks"',
       sender: 'bot'
     }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [taskCreationStep, setTaskCreationStep] = useState(null); // null, 'name', 'date', 'time'
+  const [tempTask, setTempTask] = useState({ title: '', date: '', time: '' });
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to latest message
@@ -36,10 +38,26 @@ function Chatbot({ tasks, onAddTask, userId }) {
       const taskMatch = userMessage.match(/(?:add|create|make)(?:\s+a)?\s+(?:task|todo)?\s*(?:to\s+)?(.+)/i);
       if (taskMatch) {
         const taskTitle = taskMatch[1].trim();
+        // If task title is too short, ask for more details
+        if (taskTitle.length < 3 || taskTitle === 'task' || taskTitle === 'todo') {
+          return {
+            response: `📝 Sure! I'd love to help you add a task. What would you like to call it?`,
+            action: 'askTaskName',
+            needsDetails: true
+          };
+        }
         return {
-          response: `✅ I'll add "${taskTitle}" to your tasks. Creating it now...`,
-          action: 'addTask',
+          response: `📝 Got it! I'll add "${taskTitle}" to your tasks.\n\nWould you like to set a due date? (e.g., "tomorrow", "next Monday", or just say "no")`,
+          action: 'askTaskDate',
+          needsDetails: true,
           taskTitle: taskTitle
+        };
+      } else {
+        // User said "add task" or "create task" but no details
+        return {
+          response: `📝 Sure! I'd love to help you add a task. What would you like to call it?`,
+          action: 'askTaskName',
+          needsDetails: true
         };
       }
     }
@@ -56,8 +74,8 @@ function Chatbot({ tasks, onAddTask, userId }) {
       };
     }
 
-    // Completed tasks pattern
-    if (lowerMessage.includes('completed') || lowerMessage.includes('done')) {
+    // Completed tasks pattern (check before generic show)
+    if (lowerMessage.includes('completed') || lowerMessage.includes('done tasks')) {
       const completed = tasks.filter(t => t.completed);
       const response = completed.length > 0
         ? `✅ You have ${completed.length} completed task(s):\n${completed.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`
@@ -69,8 +87,8 @@ function Chatbot({ tasks, onAddTask, userId }) {
       };
     }
 
-    // Pending tasks pattern
-    if (lowerMessage.includes('pending') || lowerMessage.includes('remaining') || lowerMessage.includes('todo')) {
+    // Pending tasks pattern (check before generic show)
+    if (lowerMessage.includes('pending') || lowerMessage.includes('remaining') || lowerMessage.includes('todo tasks')) {
       const pending = tasks.filter(t => !t.completed);
       const response = pending.length > 0
         ? `⏳ You have ${pending.length} pending task(s):\n${pending.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`
@@ -125,48 +143,160 @@ function Chatbot({ tasks, onAddTask, userId }) {
     setLoading(true);
 
     try {
-      // Call OpenAI API via backend
-      const response = await axios.post(CHAT_API_URL, {
-        message: userMessage,
-        tasks: tasks
-      });
+      // Handle task creation flow
+      if (taskCreationStep === 'name') {
+        // User provided task name
+        setTempTask(prev => ({ ...prev, title: userMessage }));
+        setTaskCreationStep('date');
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: `📅 When should this be done? (e.g., "tomorrow", "next Monday", "2026-01-05", or just say "no due date")`,
+          sender: 'bot'
+        }]);
+        setLoading(false);
+        return;
+      }
 
-      const result = response.data;
-      
-      // Add bot response
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        text: result.response,
-        sender: 'bot'
-      }]);
-
-      // Execute action if needed
-      if (result.action === 'addTask' && result.taskTitle) {
-        // Small delay for better UX
-        setTimeout(() => {
-          onAddTask({
-            title: result.taskTitle,
-            description: '',
-            completed: false,
-            createdAt: new Date().toISOString()
-          });
-          
+      if (taskCreationStep === 'date') {
+        // User provided date
+        const dateInput = userMessage.toLowerCase();
+        if (dateInput !== 'no' && dateInput !== 'no due date' && dateInput !== 'none') {
+          setTempTask(prev => ({ ...prev, date: userMessage }));
+          setTaskCreationStep('time');
           setMessages(prev => [...prev, {
-            id: Date.now() + 2,
-            text: `✨ Task "${result.taskTitle}" has been added to your list!`,
+            id: Date.now() + 1,
+            text: `⏰ What time? (e.g., "9:00 AM", "14:30", or just say "no specific time")`,
             sender: 'bot'
           }]);
-        }, 500);
+        } else {
+          setTempTask(prev => ({ ...prev, date: '' }));
+          setTaskCreationStep('time');
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            text: `⏰ What time? (e.g., "9:00 AM", "14:30", or just say "no specific time")`,
+            sender: 'bot'
+          }]);
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (taskCreationStep === 'time') {
+        // User provided time - now create the task
+        const timeInput = userMessage.toLowerCase();
+        if (timeInput !== 'no' && timeInput !== 'no time' && timeInput !== 'none') {
+          setTempTask(prev => ({ ...prev, time: userMessage }));
+        }
+        
+        // Create the task with all details
+        const finalTask = {
+          title: tempTask.title,
+          description: `${tempTask.date ? `📅 Date: ${tempTask.date}\n` : ''}${tempTask.time ? `⏰ Time: ${tempTask.time}` : ''}`.trim(),
+          completed: false,
+          createdAt: new Date().toISOString()
+        };
+        
+        onAddTask(finalTask);
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: `✨ Task "${tempTask.title}" has been added!${tempTask.date ? ` 📅 ${tempTask.date}` : ''}${tempTask.time ? ` ⏰ ${tempTask.time}` : ''}`,
+          sender: 'bot'
+        }]);
+        
+        // Reset task creation state
+        setTaskCreationStep(null);
+        setTempTask({ title: '', date: '', time: '' });
+        setLoading(false);
+        return;
+      }
+
+      // Normal chat flow
+      try {
+        const response = await axios.post(CHAT_API_URL, {
+          message: userMessage,
+          tasks: tasks,
+          userId: userId
+        }, {
+          timeout: 10000
+        });
+
+        const { response: aiResponse, action, taskTitle, needsDetails } = response.data;
+
+        // Add bot response
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: aiResponse,
+          sender: 'bot'
+        }]);
+
+        // Execute action if needed
+        if (needsDetails && (action === 'askTaskName' || action === 'askTaskDate')) {
+          // Start multi-step task creation
+          setTaskCreationStep('name');
+          if (taskTitle) {
+            setTempTask({ title: taskTitle, date: '', time: '' });
+            setTaskCreationStep('date');
+          }
+        } else if (action === 'addTask' && taskTitle) {
+          // Quick add (one-step)
+          setTimeout(() => {
+            onAddTask({
+              title: taskTitle,
+              description: '',
+              completed: false,
+              createdAt: new Date().toISOString()
+            });
+            
+            setMessages(prev => [...prev, {
+              id: Date.now() + 2,
+              text: `✨ Task "${taskTitle}" has been added!`,
+              sender: 'bot'
+            }]);
+          }, 500);
+        }
+      } catch (apiError) {
+        // Fallback to local pattern matching if API fails
+        console.log('AI API unavailable, using local pattern matching');
+        
+        const result = processChatInput(userMessage);
+        
+        // Add bot response
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: result.response,
+          sender: 'bot'
+        }]);
+
+        // Handle actions
+        if (result.needsDetails && (result.action === 'askTaskName' || result.action === 'askTaskDate')) {
+          setTaskCreationStep('name');
+          if (result.taskTitle) {
+            setTempTask({ title: result.taskTitle, date: '', time: '' });
+            setTaskCreationStep('date');
+          }
+        } else if (result.action === 'addTask' && result.taskTitle) {
+          setTimeout(() => {
+            onAddTask({
+              title: result.taskTitle,
+              description: '',
+              completed: false,
+              createdAt: new Date().toISOString()
+            });
+            
+            setMessages(prev => [...prev, {
+              id: Date.now() + 2,
+              text: `✨ Task "${result.taskTitle}" has been added!`,
+              sender: 'bot'
+            }]);
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('Error processing message:', error);
-      const errorMessage = error.response?.data?.details || 
-                          error.response?.data?.error || 
-                          'Sorry, I encountered an error. Please try again.';
       
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
-        text: `❌ ${errorMessage}`,
+        text: '❌ Sorry, I encountered an error. Please try again.',
         sender: 'bot'
       }]);
     } finally {
