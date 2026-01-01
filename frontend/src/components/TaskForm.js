@@ -157,34 +157,38 @@ function TaskForm({ onAddTask }) {
         )}
 
         <label htmlFor={titleId} className="visually-hidden">Task Title *</label>
-        <input
-          id={titleId}
-          type="text"
-          placeholder="What needs to be done? *"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            if (showSmartInput) setSmartInputValue(e.target.value); // Sync back
-            setError('');
-          }}
-          className="input-field"
-          maxLength="100"
-        />
-        <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '-10px' }} aria-hidden="true">
-          {title.length}/100
+        <div style={{ marginBottom: '5px' }}>
+          <input
+            id={titleId}
+            type="text"
+            placeholder="What needs to be done? *"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (showSmartInput) setSmartInputValue(e.target.value); // Sync back
+              setError('');
+            }}
+            className="input-field"
+            maxLength="100"
+          />
+          <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '5px' }} aria-hidden="true">
+            {title.length}/100
+          </div>
         </div>
         <label htmlFor={descriptionId} className="visually-hidden">Task Description</label>
-        <textarea
-          id={descriptionId}
-          placeholder="Add more details (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="input-field"
-          rows="3"
-          maxLength="500"
-        />
-        <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '-10px' }}>
-          {description.length}/500
+        <div style={{ marginBottom: '5px' }}>
+          <textarea
+            id={descriptionId}
+            placeholder="Add more details (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="input-field"
+            rows="3"
+            maxLength="500"
+          />
+          <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '5px' }}>
+            {description.length}/500
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '10px' }}>

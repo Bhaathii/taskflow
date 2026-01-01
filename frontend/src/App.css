@@ -487,12 +487,23 @@ body {
   }
 
   .task-form form {
-    gap: 12px;
+    gap: 10px;
   }
 
   .input-field {
-    padding: 10px 12px;
-    font-size: 0.95rem;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+
+  .input-field[type="text"],
+  .input-field[type="email"],
+  .input-field[type="password"],
+  .input-field[type="datetime-local"],
+  .input-field[type="date"],
+  .task-form textarea {
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .btn {
