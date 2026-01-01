@@ -223,7 +223,9 @@ function App() {
             <>
               {/* Search Bar */}
               <div style={{ marginBottom: '20px' }}>
+                <label htmlFor="search-tasks" className="visually-hidden">Search tasks by title or description</label>
                 <input
+                  id="search-tasks"
                   type="text"
                   placeholder="🔍 Search tasks by title or description..."
                   value={searchQuery}
@@ -240,9 +242,10 @@ function App() {
               </div>
 
               {/* Filter Buttons */}
-              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }} role="group" aria-label="Filter tasks">
                 <button
                   onClick={() => setFilterStatus('all')}
+                  aria-pressed={filterStatus === 'all'}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
@@ -258,6 +261,7 @@ function App() {
                 </button>
                 <button
                   onClick={() => setFilterStatus('pending')}
+                  aria-pressed={filterStatus === 'pending'}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
@@ -273,6 +277,7 @@ function App() {
                 </button>
                 <button
                   onClick={() => setFilterStatus('completed')}
+                  aria-pressed={filterStatus === 'completed'}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
