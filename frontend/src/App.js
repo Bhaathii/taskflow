@@ -240,9 +240,16 @@ function App() {
               </div>
 
               {/* Filter Buttons */}
-              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <div
+                role="group"
+                aria-label="Filter tasks"
+                style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}
+              >
                 <button
+                  type="button"
                   onClick={() => setFilterStatus('all')}
+                  aria-pressed={filterStatus === 'all'}
+                  aria-label={`Show all tasks (${tasks.length})`}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
@@ -257,7 +264,10 @@ function App() {
                   📋 All ({tasks.length})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterStatus('pending')}
+                  aria-pressed={filterStatus === 'pending'}
+                  aria-label={`Show pending tasks (${tasks.filter(t => !t.completed).length})`}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
@@ -272,7 +282,10 @@ function App() {
                   ⏳ Pending ({tasks.filter(t => !t.completed).length})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterStatus('completed')}
+                  aria-pressed={filterStatus === 'completed'}
+                  aria-label={`Show completed tasks (${completedCount})`}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
