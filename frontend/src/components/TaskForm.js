@@ -102,6 +102,8 @@ function TaskForm({ onAddTask }) {
         <button
           type="button"
           onClick={() => setShowSmartInput(!showSmartInput)}
+          aria-pressed={showSmartInput}
+          aria-label={showSmartInput ? "Switch to simple input mode" : "Switch to smart input mode"}
           style={{
             background: 'none',
             border: 'none',
@@ -122,14 +124,18 @@ function TaskForm({ onAddTask }) {
       </div>
 
       {error && (
-        <div style={{
-          color: '#d32f2f',
-          marginBottom: '15px',
-          fontSize: '0.9rem',
-          padding: '10px',
-          background: '#ffebee',
-          borderRadius: '8px'
-        }}>
+        <div
+          role="alert"
+          aria-live="polite"
+          style={{
+            color: '#d32f2f',
+            marginBottom: '15px',
+            fontSize: '0.9rem',
+            padding: '10px',
+            background: '#ffebee',
+            borderRadius: '8px'
+          }}
+        >
           {error}
         </div>
       )}
