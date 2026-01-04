@@ -19,6 +19,8 @@ function TaskForm({ onAddTask }) {
   const reminderId = React.useId();
   const priorityId = React.useId();
   const smartInputId = React.useId();
+  const smartHelpId = React.useId();
+  const titleCountId = React.useId();
 
   const handleSmartInputChange = (e) => {
     const text = e.target.value;
@@ -29,24 +31,11 @@ function TaskForm({ onAddTask }) {
       const date = parsed[0].start.date();
 
       // Convert to local YYYY-MM-DDTHH:mm string for the input
-      // This is a bit tricky. new Date(date) gives a date object.
-      // We want the local time string representation.
       const offset = date.getTimezoneOffset() * 60000;
       const localDate = new Date(date.getTime() - offset);
       const isoString = localDate.toISOString().slice(0, 16);
 
       setDueDate(isoString);
-
-      // Remove the date text from the title?
-      // Optional: keep the full text as title or strip the date part.
-      // For now, let's keep the full text in the smart input, but update the 'title' state
-      // with the text MINUS the date string if we wanted to be fancy.
-      // But user might want to edit.
-
-      // Let's just update the title to match the input text for now,
-      // or maybe the user wants the Smart Input to just populate the fields.
-
-      // Current design: Smart Input populates Title and Date.
       setTitle(text);
     } else {
       setTitle(text);
@@ -102,6 +91,9 @@ function TaskForm({ onAddTask }) {
         <button
           type="button"
           onClick={() => setShowSmartInput(!showSmartInput)}
+          aria-expanded={showSmartInput}
+          aria-pressed={showSmartInput}
+          aria-label={showSmartInput ? "Switch to simple input mode" : "Switch to smart input mode"}
           style={{
             background: 'none',
             border: 'none',
@@ -122,13 +114,15 @@ function TaskForm({ onAddTask }) {
       </div>
 
       {error && (
-        <div style={{
-          color: '#d32f2f',
-          marginBottom: '15px',
-          fontSize: '0.9rem',
-          padding: '10px',
-          background: '#ffebee',
-          borderRadius: '8px'
+        <div
+          role="alert"
+          style={{
+            color: '#d32f2f',
+            marginBottom: '15px',
+            fontSize: '0.9rem',
+            padding: '10px',
+            background: '#ffebee',
+            borderRadius: '8px'
         }}>
           {error}
         </div>
@@ -149,8 +143,9 @@ function TaskForm({ onAddTask }) {
               onChange={handleSmartInputChange}
               className="input-field"
               autoFocus
+              aria-describedby={smartHelpId}
             />
-            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '5px' }}>
+            <div id={smartHelpId} style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '5px' }}>
               Type naturally. We'll extract the due date automatically.
             </div>
           </div>
@@ -165,13 +160,14 @@ function TaskForm({ onAddTask }) {
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
-              if (showSmartInput) setSmartInputValue(e.target.value); // Sync back
+              if (showSmartInput) setSmartInputValue(e.target.value);
               setError('');
             }}
             className="input-field"
             maxLength="100"
+            aria-describedby={titleCountId}
           />
-          <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '5px' }} aria-hidden="true">
+          <div id={titleCountId} style={{ fontSize: '0.85rem', color: '#999', marginTop: '5px' }} aria-hidden="true">
             {title.length}/100
           </div>
         </div>
